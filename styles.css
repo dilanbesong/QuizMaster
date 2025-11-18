@@ -259,7 +259,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 1.0rem;
         }
         .input-group input,
         .input-group textarea {
@@ -267,7 +267,7 @@
             padding: 12px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             box-sizing: border-box;
             transition: border-color 0.2s;
         }
