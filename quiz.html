@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quiz Generator</title>
+    <link rel="shortcut icon" href="./images/favicon.ico" type="image/x-icon">
+     
+    <link rel="stylesheet" href="./quiz.css"/>
+   
+    <!-- Load Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <!-- Load MathJax for beautiful LaTeX formula rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="./quiz.js" defer></script>
+     <script src="./service-worker.js" defer></script>
+   
+</head>
+<body class="min-h-screen">
+    
+    <!-- IN-FLOW NAVIGATION BAR -->
+    <nav id="nav-bar" class="nav-bar">
+        <div class="nav-left">
+            <span class="nav-title">Dingo Quiz</span>
+            <button id="restart-btn" class="nav-restart-btn" aria-label="Restart Quiz">
+                <i data-lucide="home" style="width: 18px; height: 18px;"></i>
+                Restart
+            </button>
+            <div class="nav-links" style="margin-left: 10px;">
+                <a id="nav-quiz" class="nav-link active" data-page="quiz">Quiz Generator</a>
+                <a id="nav-about" class="nav-link" data-page="about">About</a>
+            </div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+            <i data-lucide="moon" id="moon-icon"></i>
+            <i data-lucide="sun" id="sun-icon" class="hidden"></i>
+        </button>
+    </nav>
+
+    <main class="main-content">
+        
+        <!-- Custom Error Message Box -->
+        <div id="error-message" class="error-message hidden">
+            <i data-lucide="alert-triangle"></i>
+            <span id="error-text"></span>
+            <button onclick="document.getElementById('error-message').classList.add('hidden')">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <!-- QUIZ GENERATION/PLAY SECTION -->
+        <div id="quiz-section" class="quiz-container">
+            
+            <!-- Quiz Input Card -->
+            <div id="input-card" class="card-bg">
+                <h1>Generate a Custom Quiz</h1>
+                <p style="margin-bottom: 25px; color: #6b7280; font-size: 1.1rem;">
+                    Tell the AI what topic you want to be quizzed on. It will generate a multiple-choice quiz with explanations!
+                </p>
+
+                <div class="input-group">
+                    <label for="topic">Quiz Topic (e.g., Quantum Physics, French Revolution, Calculus)</label>
+                    <input type="text" id="topic" placeholder="Enter topic here..." value="Stoichiometry and Chemical Reactions">
+                </div>
+
+                <div class="input-group">
+                    <label for="num-questions">Number of Questions (Max 10)</label>
+                    <input type="number" id="num-questions"  min="1" max="10" value="5"/>
+                </div>
+
+                <div class="input-group">
+                    <label for="difficulty">Difficulty Level (e.g., High School, University, Expert)</label>
+                    <input type="text" id="difficulty" placeholder="Optional: High School AP, Undergraduate, etc." value="High School Chemistry">
+                </div>
+
+                <button id="start-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                    <i data-lucide="sparkles"></i> Generate Quiz
+                </button>
+            </div>
+            
+            <!-- Quiz Play Card (Hidden initially) -->
+            <div id="quiz-card" class="card-bg hidden" style="position: relative;">
+
+                <!-- Loading Spinner -->
+                <div id="loading-message" class="loading-message hidden">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 4.75V6.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M17.1266 6.87347L16.066 7.93404" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19.25 12L17.75 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M17.1266 17.1265L16.066 16.066" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 17.75V19.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7.93398 16.066L6.87341 17.1265" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6.25 12L4.75 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7.93398 7.93404L6.87341 6.87347" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Generating your quiz...
+                </div>
+                
+                <div id="quiz-content">
+                    <div class="quiz-header">
+                        <span id="q-number" class="question-number">Question 1 of 5</span>
+                        <div id="timer" class="timer-display">
+                            <i data-lucide="clock" style="width: 18px; height: 18px;"></i>
+                            <span id="time-left">10:00</span>
+                        </div>
+                    </div>
+    
+                    <div class="question-area">
+                        <div id="q-text" class="question-text">
+                            The question text will appear here.
+                        </div>
+                        <button id="read-question-btn" class="voice-over-btn" disabled>
+                            <i data-lucide="volume-2"></i> 
+                            <span id="read-btn-text">Read Question</span>
+                        </button>
+                    </div>
+    
+                    <ul id="question-track" class="answer-list">
+                        <!-- Answer options injected here -->
+                    </ul>
+
+                    <!-- Review mode solution -->
+                    <div id="review-solution" class="review-explanation hidden">
+                        <strong>Solution:</strong>
+                        <p id="solution-text"></p>
+                    </div>
+                </div>
+                
+                <div class="quiz-footer">
+                    <div class="btn-group" id="pagination-btns">
+                        <button id="prev-btn" class="btn btn-secondary" disabled><i data-lucide="arrow-left"></i> Previous</button>
+                        <button id="next-btn" class="btn btn-primary">Next <i data-lucide="arrow-right"></i></button>
+                        <button id="submit-btn" class="btn btn-primary hidden"><i data-lucide="check-circle"></i> Submit Quiz</button>
+                    </div>
+                    
+                    <div id="status-bar" class="quiz-status-bar">
+                        <!-- Status indicators injected here -->
+                    </div>
+                </div>
+
+            </div> <!-- End Quiz Play Card -->
+            
+            <!-- Score Modal -->
+            <div id="score-modal" class="score-modal hidden">
+                <div class="score-content">
+                    <i data-lucide="award"></i>
+                    <h2 class="score-title">Quiz Complete!</h2>
+                    <p class="score-text">You scored:</p>
+                    <p id="final-score" class="final-score">0/10</p>
+                    <button id="modal-action-btn" class="btn btn-primary" style="width: 100%; padding: 12px;">Review Answers</button>
+                </div>
+            </div>
+        </div> <!-- End Quiz Container -->
+
+        <!-- ABOUT SECTION -->
+        <div id="about-section" class="card-bg about-section hidden">
+            <h2>About the Dynamic Quiz Generator</h2>
+            <p>This is a tool that uses the **Gemini AI model** to instantly create custom multiple-choice quizzes on virtually any topic you provide, especially those involving mathematics and science, where it correctly renders equations using MathJax.</p>
+
+            <div class="creator-info">
+                <i data-lucide="user-check" style="width: 28px; height: 28px; color: var(--color-primary);"></i>
+                <p style="font-size: 1rem; color: #4b5563;">Application Creator</p>
+                <strong>Tekoh Dilan B.</strong>
+            </div>
+
+            <p style="margin-top: 24px; font-size: 0.9rem; color: #6b7280;">
+                To return to the quiz, click on "Quiz Generator" in the navigation bar.
+            </p>
+        </div>
+
+    </main>
+</body>
+</html>
